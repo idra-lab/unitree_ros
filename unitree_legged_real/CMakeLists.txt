@@ -7,6 +7,7 @@ find_package(catkin REQUIRED COMPONENTS
     roscpp
     geometry_msgs
     unitree_legged_msgs
+    sensor_msgs
 )
 
 catkin_package()
@@ -32,17 +33,22 @@ include_directories(
 
 
 
-add_executable(example_walk src/exe/example_walk.cpp)
-target_link_libraries(example_walk ${EXTRA_LIBS} ${catkin_LIBRARIES})
-add_dependencies(example_walk ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+#add_executable(example_walk src/exe/example_walk.cpp)
+#target_link_libraries(example_walk ${EXTRA_LIBS} ${catkin_LIBRARIES})
+#add_dependencies(example_walk ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-add_executable(example_position src/exe/example_position.cpp)
-target_link_libraries(example_position ${EXTRA_LIBS} ${catkin_LIBRARIES})
-add_dependencies(example_position ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+#add_executable(example_position src/exe/example_position.cpp)
+#target_link_libraries(example_position ${EXTRA_LIBS} ${catkin_LIBRARIES})
+#add_dependencies(example_position ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+add_library(${PROJECT_NAME} src/UnitreeUdpInterface.cpp)
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${EXTRA_LIBS})
+
 
 add_executable(ros_udp src/exe/ros_udp.cpp)
-target_link_libraries(ros_udp ${EXTRA_LIBS} ${catkin_LIBRARIES})
+target_link_libraries(ros_udp ${EXTRA_LIBS} ${PROJECT_NAME} ${catkin_LIBRARIES})
 add_dependencies(ros_udp ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
 
 
 

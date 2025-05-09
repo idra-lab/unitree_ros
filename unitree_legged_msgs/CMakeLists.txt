@@ -19,6 +19,9 @@ add_message_files(
   LowState.msg
   HighCmd.msg
   HighState.msg
+  HighStateStamped.msg
+  LowStateStamped.msg
+  QuadrupedForceTorqueSensors.msg
 )
 
 generate_messages(
