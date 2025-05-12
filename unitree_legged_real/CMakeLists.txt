@@ -7,10 +7,11 @@ find_package(catkin REQUIRED COMPONENTS
     roscpp
     geometry_msgs
     unitree_legged_msgs
+    unitree_legged_sdk
     sensor_msgs
 )
 
-catkin_package()
+catkin_package(CATKIN_DEPENDS roscpp unitree_legged_msgs)
 
 message("-- CMAKE_SYSTEM_PROCESSOR: ${CMAKE_SYSTEM_PROCESSOR}")
 if("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "x86_64.*")
@@ -19,8 +20,6 @@ else()
   set(ARCH arm64)
 endif()
 
-link_directories(${CMAKE_SOURCE_DIR}/unitree_ros_to_real/unitree_legged_sdk/lib/cpp/${ARCH})
-
 set(EXTRA_LIBS -pthread libunitree_legged_sdk.so)
 
 set(CMAKE_CXX_FLAGS "-O3 -fPIC")
@@ -28,7 +27,6 @@ set(CMAKE_CXX_FLAGS "-O3 -fPIC")
 include_directories(
     include
     ${catkin_INCLUDE_DIRS}
-    ${CMAKE_SOURCE_DIR}/unitree_ros_to_real/unitree_legged_sdk/include
 )
 
 
@@ -49,6 +47,17 @@ add_executable(ros_udp src/exe/ros_udp.cpp)
 target_link_libraries(ros_udp ${EXTRA_LIBS} ${PROJECT_NAME} ${catkin_LIBRARIES})
 add_dependencies(ros_udp ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
+install(TARGETS ${PROJECT_NAME}
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
+)
 
 
+install(DIRECTORY include/${PROJECT_NAME}/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+)
 
+install(TARGETS ros_udp
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
