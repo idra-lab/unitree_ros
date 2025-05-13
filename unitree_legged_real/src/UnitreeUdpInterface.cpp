@@ -137,6 +137,7 @@ void UnitreeUdpRosInterface::highUdpRecv() {
   // best we can do is to take the time now, the sdk doesn't provide one
   stamp = ros::Time::now();
   high_udp.GetRecv(high_state);
+  std::cerr << high_state.robotID << std::endl;
 
   high_state_msg.state = state2rosMsg(high_state);
   high_state_msg.header.stamp = stamp;
