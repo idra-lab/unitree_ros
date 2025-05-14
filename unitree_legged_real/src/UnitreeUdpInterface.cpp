@@ -87,9 +87,9 @@ void UnitreeUdpRosInterface::imuToRosMsg(const IMU &imu, const ros::Time &stamp,
 }
 
 UnitreeUdpRosInterface::UnitreeUdpRosInterface(ros::NodeHandle &nh)
-    : low_udp(8082, "192.168.123.10", 8007, LOW_CMD_LENGTH, LOW_STATE_LENGTH),
-      high_udp(8081, "192.168.123.220", 8082, sizeof(HighCmd),
-               sizeof(HighState)), nh_(nh){
+    : low_udp(UNITREE_LEGGED_SDK::LOWLEVEL),
+      high_udp(UNITREE_LEGGED_SDK::HIGHLEVEL), nh_(nh){
+
 
   // initialize all the publishers
   joint_state_pub = nh_.advertise<sensor_msgs::JointState>("/joint_states", 10);
@@ -133,11 +133,11 @@ void UnitreeUdpRosInterface::lowUdpRecv() {
 }
 
 void UnitreeUdpRosInterface::highUdpRecv() {
-  high_udp.Recv();
+  int r = high_udp.Recv();
   // best we can do is to take the time now, the sdk doesn't provide one
   stamp = ros::Time::now();
   high_udp.GetRecv(high_state);
-  std::cerr << high_state.robotID << std::endl;
+  std::cerr << "Received: " << r << std::endl;
 
   high_state_msg.state = state2rosMsg(high_state);
   high_state_msg.header.stamp = stamp;

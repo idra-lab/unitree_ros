@@ -11,7 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
     sensor_msgs
 )
 
-catkin_package(CATKIN_DEPENDS roscpp unitree_legged_msgs)
+catkin_package(CATKIN_DEPENDS roscpp unitree_legged_msgs unitree_legged_sdk)
 
 message("-- CMAKE_SYSTEM_PROCESSOR: ${CMAKE_SYSTEM_PROCESSOR}")
 if("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "x86_64.*")
@@ -20,7 +20,7 @@ else()
   set(ARCH arm64)
 endif()
 
-set(EXTRA_LIBS -pthread libunitree_legged_sdk.so)
+set(EXTRA_LIBS -pthread)
 
 set(CMAKE_CXX_FLAGS "-O3 -fPIC")
 
@@ -28,8 +28,6 @@ include_directories(
     include
     ${catkin_INCLUDE_DIRS}
 )
-
-
 
 #add_executable(example_walk src/exe/example_walk.cpp)
 #target_link_libraries(example_walk ${EXTRA_LIBS} ${catkin_LIBRARIES})
@@ -42,9 +40,8 @@ include_directories(
 add_library(${PROJECT_NAME} src/UnitreeUdpInterface.cpp)
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${EXTRA_LIBS})
 
-
 add_executable(ros_udp src/exe/ros_udp.cpp)
-target_link_libraries(ros_udp ${EXTRA_LIBS} ${PROJECT_NAME} ${catkin_LIBRARIES})
+target_link_libraries(ros_udp ${PROJECT_NAME} ${catkin_LIBRARIES})
 add_dependencies(ros_udp ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 install(TARGETS ${PROJECT_NAME}
