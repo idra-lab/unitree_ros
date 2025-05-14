@@ -7,11 +7,10 @@ find_package(catkin REQUIRED COMPONENTS
     roscpp
     geometry_msgs
     unitree_legged_msgs
-    unitree_legged_sdk
     sensor_msgs
 )
 
-catkin_package(CATKIN_DEPENDS roscpp unitree_legged_msgs unitree_legged_sdk)
+catkin_package(CATKIN_DEPENDS roscpp unitree_legged_msgs)
 
 message("-- CMAKE_SYSTEM_PROCESSOR: ${CMAKE_SYSTEM_PROCESSOR}")
 if("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "x86_64.*")
@@ -20,7 +19,7 @@ else()
   set(ARCH arm64)
 endif()
 
-set(EXTRA_LIBS -pthread)
+set(EXTRA_LIBS -pthread libunitree_legged_sdk.so)
 
 set(CMAKE_CXX_FLAGS "-O3 -fPIC")
 
@@ -36,6 +35,9 @@ include_directories(
 #add_executable(example_position src/exe/example_position.cpp)
 #target_link_libraries(example_position ${EXTRA_LIBS} ${catkin_LIBRARIES})
 #add_dependencies(example_position ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+
+link_directories(/home/mcamurri/git/unitree_legged_sdk/lib)
 
 add_library(${PROJECT_NAME} src/UnitreeUdpInterface.cpp)
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${EXTRA_LIBS})

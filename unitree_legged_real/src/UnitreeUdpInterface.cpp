@@ -116,7 +116,11 @@ UnitreeUdpRosInterface::UnitreeUdpRosInterface(ros::NodeHandle &nh)
 }
 
 void UnitreeUdpRosInterface::lowUdpRecv() {
-  low_udp.Recv();
+    low_udp.Recv();
+}
+
+void UnitreeUdpRosInterface::lowUdpGetRecv() {
+
   // best we can do is to take the time now, the sdk doesn't provide one
   stamp = ros::Time::now();
   low_udp.GetRecv(low_state);

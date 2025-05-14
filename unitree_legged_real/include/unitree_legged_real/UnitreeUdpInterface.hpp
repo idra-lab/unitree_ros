@@ -40,6 +40,7 @@ public:
   UnitreeUdpRosInterface(ros::NodeHandle &nh);
 
   void lowUdpRecv();
+  void lowUdpGetRecv();
 
   void highUdpRecv();
 
