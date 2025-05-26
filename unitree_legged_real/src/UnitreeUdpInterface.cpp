@@ -3,7 +3,7 @@
 
 using namespace UNITREE_LEGGED_SDK;
 
-void UnitreeUdpRosInterface::highStateToFeetForces(const HighState& state,
+void UnitreeUdpRosInterface::lowStateToFeetForces(const LowState& state,
                                                    const ros::Time& stamp,
                                                    unitree_legged_msgs::QuadrupedForceTorqueSensors& feet_forces_msg) {
     feet_forces_msg.header.stamp = stamp;
@@ -60,7 +60,7 @@ void UnitreeUdpRosInterface::jointStateToRosMsg(const LowState &state,
 
     joint_state_msg.header.stamp = stamp;
     // assuming there are 12 actuators and the ordering is known
-    // and the joint state message has already 12 elements
+    // and the joint state message has already 12 elements allocated
     for(size_t i = 0; i < 12; i++){
         joint_state_msg.position[i] = state.motorState[i].q;
         joint_state_msg.velocity[i] = state.motorState[i].dq;
@@ -70,9 +70,10 @@ void UnitreeUdpRosInterface::jointStateToRosMsg(const LowState &state,
 
 
 void UnitreeUdpRosInterface::imuToRosMsg(const IMU &imu, const ros::Time &stamp,
-                 sensor_msgs::Imu &imu_msg) {
+                 sensor_msgs::Imu &imu_msg)
+{
   imu_msg.header.stamp = stamp;
-  //imu_msg.header.frame_id = frame_id; // assume the frame id is given
+  // assume the frame id is given, so not filling it in
   imu_msg.orientation.w = static_cast<double>(imu.quaternion[0]);
   imu_msg.orientation.x = static_cast<double>(imu.quaternion[1]);
   imu_msg.orientation.y = static_cast<double>(imu.quaternion[2]);
@@ -82,22 +83,22 @@ void UnitreeUdpRosInterface::imuToRosMsg(const IMU &imu, const ros::Time &stamp,
   imu_msg.angular_velocity.z = static_cast<double>(imu.gyroscope[2]);
   imu_msg.linear_acceleration.x = static_cast<double>(imu.accelerometer[0]);
   imu_msg.linear_acceleration.y = static_cast<double>(imu.accelerometer[1]);
-  imu_msg.linear_acceleration.z =
-      -static_cast<double>(imu.accelerometer[2]); // Note the negative sign
+  imu_msg.linear_acceleration.z = static_cast<double>(imu.accelerometer[2]);
 }
 
 UnitreeUdpRosInterface::UnitreeUdpRosInterface(ros::NodeHandle &nh)
-    : low_udp(UNITREE_LEGGED_SDK::LOWLEVEL),
-      high_udp(UNITREE_LEGGED_SDK::HIGHLEVEL), nh_(nh){
-
-
+    : low_udp(UNITREE_LEGGED_SDK::LOWLEVEL), nh_(nh)
+{
+  // Send an empty command at start. This is needed for some reason.
+  LowCmd cmd = {0};
+  low_udp.InitCmdData(cmd);
+  low_udp.SetSend(cmd);
+  low_udp.Send();
+  
   // initialize all the publishers
-  joint_state_pub = nh_.advertise<sensor_msgs::JointState>("/joint_states", 10);
-  pub_high = nh_.advertise<unitree_legged_msgs::HighStateStamped>("/aliengo_ros/high_state",10);
+  joint_state_pub = nh_.advertise<sensor_msgs::JointState>("/joint_states", 10);  
   pub_low  = nh_.advertise<unitree_legged_msgs::LowStateStamped>("/aliengo_ros/low_state",10);
   imu_pub  = nh_.advertise<sensor_msgs::Imu>("/aliengo_ros/imu",10);
-  pose_pub = nh_.advertise<geometry_msgs::PoseStamped>("/aliengo_ros/pose",10);
-  twist_pub = nh_.advertise<geometry_msgs::TwistStamped>("/aliengo_ros/twist",10);
   feet_forces_pub = nh_.advertise<unitree_legged_msgs::QuadrupedForceTorqueSensors>("/aliengo_ros/feet_forces",10);
 
   // prepare common fields for messages
@@ -116,46 +117,37 @@ UnitreeUdpRosInterface::UnitreeUdpRosInterface(ros::NodeHandle &nh)
 }
 
 void UnitreeUdpRosInterface::lowUdpRecv() {
-    low_udp.Recv();
+    // Not sure whether the separation between getRecv() and Recv() calls
+    // in two separate threads is really needed or not, keeping it for now
+    // to follow the example provided by the SDK
+    low_udp.Recv();  
 }
 
 void UnitreeUdpRosInterface::lowUdpGetRecv() {
-
   // best we can do is to take the time now, the sdk doesn't provide one
   stamp = ros::Time::now();
   low_udp.GetRecv(low_state);
 
-  // using SDK converter
+  // using SDK converter for the low state
   low_state_msg.state = state2rosMsg(low_state);
   low_state_msg.header.stamp = stamp;
 
+  // publish an augmented version of the low state message including a header
+  // all other messages are derived from this one and could potentially
+  // translated somwhere else, but we publish them here for now
   pub_low.publish(low_state_msg);
 
+  // convert and publish commonly available ROS messages: joint states, IMU
   jointStateToRosMsg(low_state,stamp,joint_state_msg);
   joint_state_pub.publish(joint_state_msg);
 
-}
-
-void UnitreeUdpRosInterface::highUdpRecv() {
-  int r = high_udp.Recv();
-  // best we can do is to take the time now, the sdk doesn't provide one
-  stamp = ros::Time::now();
-  high_udp.GetRecv(high_state);
-  std::cerr << "Received: " << r << std::endl;
-
-  high_state_msg.state = state2rosMsg(high_state);
-  high_state_msg.header.stamp = stamp;
-  pub_high.publish(high_state_msg);
-
-  imuToRosMsg(high_state.imu, stamp, imu_msg);
+  imuToRosMsg(low_state.imu, stamp, imu_msg);
   imu_pub.publish(imu_msg);
 
-  highStateToPoseMsg(high_state, stamp, pose_msg);
-  pose_pub.publish(pose_msg);
-
-  highStateToTwistMsg(high_state, stamp, twist_msg);
-  twist_pub.publish(twist_msg);
-
-  highStateToFeetForces(high_state, stamp, feet_forces_msg);
+  // convert and publish the feet forces as custom message identical to
+  // pronto_msgs::QuadrupedForceTorqueSensors, but defined inside
+  // unitree_legged_msgs. The trick works because the MD5 checksum will be the
+  // same, so we don't add a dependency on pronto_msgs
+  lowStateToFeetForces(low_state, stamp, feet_forces_msg);
   feet_forces_pub.publish(feet_forces_msg);
 }
