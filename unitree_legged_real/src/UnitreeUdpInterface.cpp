@@ -57,14 +57,16 @@ void UnitreeUdpRosInterface::highStateToPoseMsg(const HighState& state,
 void UnitreeUdpRosInterface::jointStateToRosMsg(const LowState &state,
                                                 const ros::Time& stamp,
                         sensor_msgs::JointState& joint_state_msg)  {
-
+    // default ordering for Unitree robots in HyQ conventions:
+    // RF, LF, RH, LH
+    // joint ordering per leg is the same as HyQ conventions:
+    size_t jid[12] = {3, 4, 5, 0, 1, 2, 9, 10, 11, 6, 7, 8};
     joint_state_msg.header.stamp = stamp;
-    // assuming there are 12 actuators and the ordering is known
-    // and the joint state message has already 12 elements allocated
+    // assuming the joint state message has already 12 elements allocated
     for(size_t i = 0; i < 12; i++){
-        joint_state_msg.position[i] = state.motorState[i].q;
-        joint_state_msg.velocity[i] = state.motorState[i].dq;
-        joint_state_msg.effort[i] = state.motorState[i].tauEst;
+        joint_state_msg.position[i] = state.motorState[jid[i]].q;
+        joint_state_msg.velocity[i] = state.motorState[jid[i]].dq;
+        joint_state_msg.effort[i] = state.motorState[jid[i]].tauEst;
     }
 }
 
@@ -104,11 +106,12 @@ UnitreeUdpRosInterface::UnitreeUdpRosInterface(ros::NodeHandle &nh)
   // prepare common fields for messages
   imu_msg.header.frame_id = "imu_link";
 
-  // those are the standard names used by Unitree ... not great, I know
-  joint_state_msg.name = {"FR_hip_joint", "FR_thigh_joint", "FR_calf_joint",
-                          "FL_hip_joint", "FL_thigh_joint", "FL_calf_joint",
-                          "RR_hip_joint", "RR_thigh_joint", "RR_calf_joint",
-                          "RL_hip_joint", "RL_thigh_joint", "RL_calf_joint"};
+  // Use same joint ordering for HyQ/ANYmal, but keep Unitree names.
+  //
+  joint_state_msg.name = {"FL_hip_joint", "FL_thigh_joint", "FL_calf_joint",
+                          "FR_hip_joint", "FR_thigh_joint", "FR_calf_joint",
+                          "RL_hip_joint", "RL_thigh_joint", "RL_calf_joint",
+                          "RR_hip_joint", "RR_thigh_joint", "RR_calf_joint"};
 
   // make all fields of the appropriate size
   joint_state_msg.position = std::vector<double>(12,0);
