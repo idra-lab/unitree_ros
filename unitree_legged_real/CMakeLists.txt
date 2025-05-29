@@ -3,7 +3,7 @@ project(unitree_legged_real)
 
 add_compile_options(-std=c++11)
 set(CMAKE_BUILD_TYPE "Release")
-cmake_policy(SET CMP0148 OLD)
+#cmake_policy(SET CMP0148 OLD)
 
 find_package(catkin REQUIRED COMPONENTS
     roscpp
@@ -21,8 +21,12 @@ else()
   set(ARCH arm64)
 endif()
 
-set(UNITREE_LEGGED_SDK_PATH "/home/mcamurri/git/unitree_legged_sdk")
-link_directories("${UNITREE_LEGGED_SDK_PAH}/libi/cpp/${ARCH}/")
+
+set(UNITREE_LEGGED_SDK_PATH "/home/unitree/unitree_legged_sdk")
+set(UNITREE_LEGGED_SDK_LIB_PATH "${UNITREE_LEGGED_SDK_PATH}/lib")
+
+
+link_directories("${UNITREE_LEGGED_SDK_LIB_PATH}")
 set(EXTRA_LIBS -pthread libunitree_legged_sdk.so lcm)
 
 
@@ -44,7 +48,7 @@ include_directories(
 
 
 #link_directories(/home/mcamurri/unitree_legged_sdk/lib)
-link_directories(/home/mcamurri/catkin_ws/src/unitree_legged_sdk/lib)
+#link_directories(/home/mcamurri/catkin_ws/src/unitree_legged_sdk/lib)
 
 add_library(${PROJECT_NAME} src/UnitreeUdpInterface.cpp)
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${EXTRA_LIBS})
