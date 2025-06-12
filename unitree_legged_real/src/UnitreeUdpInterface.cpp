@@ -1,6 +1,11 @@
 #include <unitree_legged_real/UnitreeUdpInterface.hpp>
 #include <unitree_legged_real/convert.h>
 #include "sensor_msgs/JointState.h"
+#include <iostream>
+#include <stdio.h>
+#include <stdint.h>
+
+using namespace std;
 
 using namespace UNITREE_LEGGED_SDK;
 
@@ -103,6 +108,9 @@ UnitreeUdpRosInterface::UnitreeUdpRosInterface(ros::NodeHandle &nh)
   imu_pub  = nh_.advertise<sensor_msgs::Imu>("/aliengo_ros/imu",10);
   feet_forces_pub = nh_.advertise<unitree_legged_msgs::QuadrupedForceTorqueSensors>("/aliengo_ros/feet_forces",10);
 
+  // initialize subscriber
+  desired_joint_state = nh_.subscribe("/command", 1, &UnitreeUdpRosInterface::lowCmdCallback, this);
+
   // prepare common fields for messages
   imu_msg.header.frame_id = "imu_link";
 
@@ -161,10 +169,13 @@ void UnitreeUdpRosInterface::lowUdpSend(){
 }
 
 void UnitreeUdpRosInterface::lowCmdCallback(const sensor_msgs::JointState::ConstPtr &joint_cmd){
-  
   float torques[] = {-1.6, 0, 0, -1.6, 0, 0, -1.6, 0, 0, -1.6, 0, 0};
+  
+  cmd.levelFlag = LOWLEVEL;
 
   for (std::size_t i(0); i < 12; ++i){
+	  
+	  cmd.motorCmd[i].mode = 0x0A;
 	  cmd.motorCmd[i].q = joint_cmd->position[i];
 	  cmd.motorCmd[i].dq = joint_cmd->velocity[i]; // this is normally zero
 	  cmd.motorCmd[i].tau = joint_cmd->effort[i]; // this is normally fixed
@@ -178,4 +189,6 @@ void UnitreeUdpRosInterface::lowCmdCallback(const sensor_msgs::JointState::Const
 		cmd.motorCmd[i].Kd = joint_cmd->velocity[12]; // typically 3
 	}
   }
+ std::cout << "Communication level is set to LOW-level." << std::endl;
+
 }

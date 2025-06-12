@@ -94,6 +94,7 @@ private:
   ros::Publisher joint_state_pub;
   ros::Publisher imu_pub;
   ros::Publisher feet_forces_pub;
+  ros::Subscriber desired_joint_state;
 
   ros::NodeHandle &nh_;
 
