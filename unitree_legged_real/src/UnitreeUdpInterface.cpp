@@ -1,5 +1,6 @@
 #include <unitree_legged_real/UnitreeUdpInterface.hpp>
 #include <unitree_legged_real/convert.h>
+#include "sensor_msgs/JointState.h"
 
 using namespace UNITREE_LEGGED_SDK;
 
@@ -92,7 +93,6 @@ UnitreeUdpRosInterface::UnitreeUdpRosInterface(ros::NodeHandle &nh)
     : low_udp(UNITREE_LEGGED_SDK::LOWLEVEL), nh_(nh)
 {
   // Send an empty command at start. This is needed for some reason.
-  LowCmd cmd = {0};
   low_udp.InitCmdData(cmd);
   low_udp.SetSend(cmd);
   low_udp.Send();
@@ -153,4 +153,29 @@ void UnitreeUdpRosInterface::lowUdpGetRecv() {
   // same, so we don't add a dependency on pronto_msgs
   lowStateToFeetForces(low_state, stamp, feet_forces_msg);
   feet_forces_pub.publish(feet_forces_msg);
+}
+
+void UnitreeUdpRosInterface::lowUdpSend(){
+  low_udp.SetSend(cmd);
+  low_udp.Send();
+}
+
+void UnitreeUdpRosInterface::lowCmdCallback(const sensor_msgs::JointState::ConstPtr &joint_cmd){
+  
+  float torques[] = {-1.6, 0, 0, -1.6, 0, 0, -1.6, 0, 0, -1.6, 0, 0};
+
+  for (std::size_t i(0); i < 12; ++i){
+	  cmd.motorCmd[i].q = joint_cmd->position[i];
+	  cmd.motorCmd[i].dq = joint_cmd->velocity[i]; // this is normally zero
+	  cmd.motorCmd[i].tau = joint_cmd->effort[i]; // this is normally fixed
+
+
+  }
+  // WARNING using a fake 13th joint to store the Kp and Kd gains
+  if (joint_cmd->position.size() == 13 && joint_cmd->name[12] == "gains"){
+  	for (std::size_t i(0); i < 12; ++i){
+  		cmd.motorCmd[i].Kp = joint_cmd->position[12]; // typically 100
+		cmd.motorCmd[i].Kd = joint_cmd->velocity[12]; // typically 3
+	}
+  }
 }

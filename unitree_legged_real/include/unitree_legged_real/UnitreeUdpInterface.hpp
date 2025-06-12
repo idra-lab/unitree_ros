@@ -25,6 +25,7 @@ private:
 public:
   UnitreeUdpRosInterface(ros::NodeHandle &nh);
 
+  void lowCmdCallback(const sensor_msgs::JointState::ConstPtr &joint_cmd);
   /**
    * @brief lowUdpRecv  wrapper that calls the SDK's udp.Recv() function
    */
@@ -33,6 +34,8 @@ public:
    * @brief lowUdpGetRecv wrapper that calls the SDK's udp.GetRecv() function
    */
   void lowUdpGetRecv();
+
+  void lowUdpSend();
 
   /**
    * @brief imuToRosMsg converts the IMU data structure defined in the SDK
@@ -99,4 +102,5 @@ private:
   sensor_msgs::JointState joint_state_msg;
   sensor_msgs::Imu imu_msg;
   unitree_legged_msgs::QuadrupedForceTorqueSensors feet_forces_msg;
+  UNITREE_LEGGED_SDK::LowCmd cmd = {0};
 };

@@ -18,11 +18,14 @@ int main(int argc, char **argv) {
   LoopFunc loop_udpRecv("low_udp_recv", 0.002, 3,
                         boost::bind(&UnitreeUdpRosInterface::lowUdpRecv, &udp));
 
+  LoopFunc loop_udpSend("low_udp_send", 0.002, 3,
+                        boost::bind(&UnitreeUdpRosInterface::lowUdpSend, &udp));
   // Apparently it is not possible to start in low and high state
   // simultaneously, choosing to get only the low state for now
 
   loop_udpGetRecv.start();
   loop_udpRecv.start();
+  loop_udpSend.start();
 
 
   ros::spin();

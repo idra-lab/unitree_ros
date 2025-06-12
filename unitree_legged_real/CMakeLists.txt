@@ -4,7 +4,7 @@ project(unitree_legged_real)
 add_compile_options(-std=c++11)
 set(CMAKE_BUILD_TYPE "Release")
 
-cmake_policy(VERSION 3.12)
+#cmake_policy(VERSION 3.12)
 
 find_package(catkin REQUIRED COMPONENTS
     roscpp
