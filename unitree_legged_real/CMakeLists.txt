@@ -44,9 +44,9 @@ include_directories(
 #target_link_libraries(example_walk ${EXTRA_LIBS} ${catkin_LIBRARIES})
 #add_dependencies(example_walk ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-#add_executable(example_position src/exe/example_position.cpp)
-#target_link_libraries(example_position ${EXTRA_LIBS} ${catkin_LIBRARIES})
-#add_dependencies(example_position ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_executable(example_sin_joint_state src/exe/example_sin_joint_state.cpp)
+target_link_libraries(example_sin_joint_state ${EXTRA_LIBS} ${catkin_LIBRARIES})
+add_dependencies(example_sin_joint_state ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 
 add_library(${PROJECT_NAME} src/UnitreeUdpInterface.cpp)
