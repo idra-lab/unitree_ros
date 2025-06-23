@@ -1,10 +1,7 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(unitree_legged_real)
 
-add_compile_options(-std=c++11)
 set(CMAKE_BUILD_TYPE "Release")
-
-#cmake_policy(VERSION 3.12)
 
 find_package(catkin REQUIRED COMPONENTS
     roscpp
@@ -24,12 +21,12 @@ endif()
 
 
 # Assume the sdk is stored inside the $HOME folder
-set(UNITREE_LEGGED_SDK_PATH "$ENV{HOME}/unitree_legged_sdk")
-set(UNITREE_LEGGED_SDK_LIB_PATH "${UNITREE_LEGGED_SDK_PATH}/lib")
+set(UNITREE_LEGGED_SDK_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../unitree_legged_sdk")
+set(UNITREE_LEGGED_SDK_LIB_PATH "${UNITREE_LEGGED_SDK_PATH}/lib/cpp/${ARCH}")
 
 
 link_directories("${UNITREE_LEGGED_SDK_LIB_PATH}")
-set(EXTRA_LIBS -pthread libunitree_legged_sdk.so lcm)
+set(EXTRA_LIBS -pthread libunitree_legged_sdk.so lcm atomic)
 
 
 set(CMAKE_CXX_FLAGS "-O3 -fPIC")
@@ -61,7 +58,6 @@ install(TARGETS ${PROJECT_NAME}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
 )
-
 
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}

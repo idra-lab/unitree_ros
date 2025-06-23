@@ -10,11 +10,6 @@ int main(int argc, char **argv) {
   UnitreeUdpRosInterface udp(nh);
   InitEnvironment();
 
-  // Not sure whether the separation between getRecv() and Recv() calls
-  // is really needed or not, keeping it for now
-  LoopFunc loop_udpGetRecv("low_udp_get_recv", 0.002, 3,
-                        boost::bind(&UnitreeUdpRosInterface::lowUdpGetRecv, &udp));
-
   LoopFunc loop_udpRecv("low_udp_recv", 0.002, 3,
                         boost::bind(&UnitreeUdpRosInterface::lowUdpRecv, &udp));
 
@@ -23,10 +18,8 @@ int main(int argc, char **argv) {
   // Apparently it is not possible to start in low and high state
   // simultaneously, choosing to get only the low state for now
 
-  loop_udpGetRecv.start();
   loop_udpRecv.start();
   loop_udpSend.start();
-
 
   ros::spin();
 

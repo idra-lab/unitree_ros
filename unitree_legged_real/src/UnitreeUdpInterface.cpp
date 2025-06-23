@@ -22,44 +22,6 @@ void UnitreeUdpRosInterface::lowStateToFeetForces(const LowState& state,
     feet_forces_msg.lh.force.z = state.footForce[3];
 }
 
-void UnitreeUdpRosInterface::highStateToTwistMsg(const HighState& state,
-                                                 const ros::Time& stamp,
-                                                 geometry_msgs::TwistStamped& twist)  {
-    twist.header.stamp = stamp;
-
-    // linear velocity, coming from internal odometry of the robot?
-    twist.twist.linear.x = state.velocity[0];
-    twist.twist.linear.y = state.velocity[1];
-    twist.twist.linear.z = state.velocity[2];
-
-    // take angular velocity from the IMU for now
-    twist.twist.angular.x = state.imu.gyroscope[0];
-    twist.twist.angular.y = state.imu.gyroscope[1];
-    twist.twist.angular.z = state.imu.gyroscope[2];
-
-
-}
-
-void UnitreeUdpRosInterface::highStateToPoseMsg(const HighState& state,
-                                                const ros::Time& stamp,
-                                                geometry_msgs::PoseStamped& pose)  {
-
-    pose.header.stamp = stamp;
-
-    // the high state seems to have a position vector coming from the internal
-    // odometry of the robot
-    pose.pose.position.x = state.position[0];
-    pose.pose.position.y = state.position[1];
-    pose.pose.position.z = state.position[2];
-
-    // take orientation from the imu quaternion, it seems not available elsewhere
-    pose.pose.orientation.w = static_cast<double>(state.imu.quaternion[0]);
-    pose.pose.orientation.x = static_cast<double>(state.imu.quaternion[1]);
-    pose.pose.orientation.y = static_cast<double>(state.imu.quaternion[2]);
-    pose.pose.orientation.z = static_cast<double>(state.imu.quaternion[3]);
-
-}
-
 void UnitreeUdpRosInterface::jointStateToRosMsg(const LowState &state,
                                                 const ros::Time& stamp,
                         sensor_msgs::JointState& joint_state_msg)  {
@@ -95,9 +57,10 @@ void UnitreeUdpRosInterface::imuToRosMsg(const IMU &imu, const ros::Time &stamp,
 }
 
 UnitreeUdpRosInterface::UnitreeUdpRosInterface(ros::NodeHandle &nh)
-    : low_udp(UNITREE_LEGGED_SDK::LOWLEVEL), nh_(nh)
+    : low_udp(UNITREE_LEGGED_SDK::LOWLEVEL), nh_(nh), shared_cmd({0})
 {
   // Send an empty command at start. This is needed for some reason.
+  auto cmd = shared_cmd.load();
   low_udp.InitCmdData(cmd);
   low_udp.SetSend(cmd);
   low_udp.Send();
@@ -115,7 +78,6 @@ UnitreeUdpRosInterface::UnitreeUdpRosInterface(ros::NodeHandle &nh)
   imu_msg.header.frame_id = "imu_link";
 
   // Use same joint ordering for HyQ/ANYmal, but keep Unitree names.
-  //
   joint_state_msg.name = {"FL_hip_joint", "FL_thigh_joint", "FL_calf_joint",
                           "FR_hip_joint", "FR_thigh_joint", "FR_calf_joint",
                           "RL_hip_joint", "RL_thigh_joint", "RL_calf_joint",
@@ -127,14 +89,15 @@ UnitreeUdpRosInterface::UnitreeUdpRosInterface(ros::NodeHandle &nh)
   joint_state_msg.effort = std::vector<double>(12,0);
 }
 
-void UnitreeUdpRosInterface::lowUdpRecv() {
+//void UnitreeUdpRosInterface::lowUdpRecv() {
     // Not sure whether the separation between getRecv() and Recv() calls
     // in two separate threads is really needed or not, keeping it for now
     // to follow the example provided by the SDK
-    low_udp.Recv();  
-}
+  //  low_udp.Recv();
+//}
 
-void UnitreeUdpRosInterface::lowUdpGetRecv() {
+void UnitreeUdpRosInterface::lowUdpRecv() {
+  low_udp.Recv(); // this instruction was previously on a separate thread
   // best we can do is to take the time now, the sdk doesn't provide one
   stamp = ros::Time::now();
   low_udp.GetRecv(low_state);
@@ -164,13 +127,17 @@ void UnitreeUdpRosInterface::lowUdpGetRecv() {
 }
 
 void UnitreeUdpRosInterface::lowUdpSend(){
+  auto cmd = shared_cmd.load();
   low_udp.SetSend(cmd);
   low_udp.Send();
 }
 
 void UnitreeUdpRosInterface::lowCmdCallback(const sensor_msgs::JointState::ConstPtr &joint_cmd){
-  float torques[] = {-1.6, 0, 0, -1.6, 0, 0, -1.6, 0, 0, -1.6, 0, 0};
-  
+
+
+  // make local copy of the command, this operation is atomic
+  auto cmd = shared_cmd.load();
+
   cmd.levelFlag = LOWLEVEL;
 
   for (std::size_t i(0); i < 12; ++i){
@@ -189,6 +156,7 @@ void UnitreeUdpRosInterface::lowCmdCallback(const sensor_msgs::JointState::Const
 		cmd.motorCmd[i].Kd = joint_cmd->velocity[12]; // typically 3
 	}
   }
- std::cout << "Communication level is set to LOW-level." << std::endl;
 
+  // update the value of the command, this operation is atomic
+  shared_cmd.store(cmd);
 }

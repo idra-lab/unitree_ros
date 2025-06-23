@@ -1,8 +1,8 @@
 #include <ros/ros.h>
 #include <unitree_legged_msgs/LowCmd.h>
 #include <unitree_legged_msgs/LowState.h>
+#include <sensor_msgs/JointState.h>
 #include "unitree_legged_sdk/unitree_legged_sdk.h"
-#include "convert.h"
 
 using namespace UNITREE_LEGGED_SDK;
 
@@ -55,7 +55,7 @@ int main(int argc, char **argv)
     joint_state_msg.name =  {"FR_hip_joint", "FR_thigh_joint", "FR_calf_joint",
                           "FL_hip_joint", "FL_thigh_joint", "FL_calf_joint",                          
                           "RR_hip_joint", "RR_thigh_joint", "RR_calf_joint",
-                          "RL_hip_joint", "RL_thigh_joint", "RL_calf_joint", "gains"}
+                          "RL_hip_joint", "RL_thigh_joint", "RL_calf_joint", "gains"};
     joint_state_msg.position.resize(13);
     joint_state_msg.velocity.resize(13);
     joint_state_msg.effort.resize(13);

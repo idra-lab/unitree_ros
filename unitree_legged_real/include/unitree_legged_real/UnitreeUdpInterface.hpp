@@ -17,9 +17,12 @@
 #include <ros/node_handle.h>
 #include <ros/publisher.h>
 
+// For the atomic assingments
+#include <atomic>
+
 class UnitreeUdpRosInterface {
 private:
-  UNITREE_LEGGED_SDK::UDP low_udp;  
+  UNITREE_LEGGED_SDK::UDP low_udp;
   UNITREE_LEGGED_SDK::LowState low_state;  
 
 public:
@@ -30,10 +33,6 @@ public:
    * @brief lowUdpRecv  wrapper that calls the SDK's udp.Recv() function
    */
   void lowUdpRecv();
-  /**
-   * @brief lowUdpGetRecv wrapper that calls the SDK's udp.GetRecv() function
-   */
-  void lowUdpGetRecv();
 
   void lowUdpSend();
 
@@ -61,25 +60,6 @@ public:
                                  sensor_msgs::JointState &joint_state_msg);
 
   /**
-   * @brief highStateToTwistMsg as the name suggests. NOT USED.
-   * @param state
-   * @param stamp
-   * @param twist
-   */
-  static void highStateToTwistMsg(const UNITREE_LEGGED_SDK::HighState &state,
-                                  const ros::Time &stamp,
-                                  geometry_msgs::TwistStamped &twist);
-
-  /**
-   * @brief highStateToPoseMsg as the name suggests. NOT USED.
-   * @param state
-   * @param stamp
-   * @param pose
-   */
-  static void highStateToPoseMsg(const UNITREE_LEGGED_SDK::HighState &state,
-                                 const ros::Time &stamp,
-                                 geometry_msgs::PoseStamped &pose);
-  /**
    * @brief lowStateToFeetForces
    * @param state
    * @param stamp
@@ -103,5 +83,5 @@ private:
   sensor_msgs::JointState joint_state_msg;
   sensor_msgs::Imu imu_msg;
   unitree_legged_msgs::QuadrupedForceTorqueSensors feet_forces_msg;
-  UNITREE_LEGGED_SDK::LowCmd cmd = {0};
+  std::atomic<UNITREE_LEGGED_SDK::LowCmd> shared_cmd;
 };
