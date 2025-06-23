@@ -12,6 +12,7 @@
 #include <unitree_legged_msgs/LowStateStamped.h>
 // this is actually a copy of pronto_msgs::QuadrupedForceTorqueSensors
 #include <unitree_legged_msgs/QuadrupedForceTorqueSensors.h>
+#include <unitree_legged_msgs/JointStateWithGains.h>
 
 // Other ROS stuff
 #include <ros/node_handle.h>
@@ -28,7 +29,7 @@ private:
 public:
   UnitreeUdpRosInterface(ros::NodeHandle &nh);
 
-  void lowCmdCallback(const sensor_msgs::JointState::ConstPtr &joint_cmd);
+  void lowCmdCallback(const unitree_legged_msgs::JointStateWithGains::ConstPtr &joint_cmd);
   /**
    * @brief lowUdpRecv  wrapper that calls the SDK's udp.Recv() function
    */

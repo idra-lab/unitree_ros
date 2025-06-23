@@ -132,29 +132,20 @@ void UnitreeUdpRosInterface::lowUdpSend(){
   low_udp.Send();
 }
 
-void UnitreeUdpRosInterface::lowCmdCallback(const sensor_msgs::JointState::ConstPtr &joint_cmd){
-
-
+void UnitreeUdpRosInterface::lowCmdCallback(const unitree_legged_msgs::JointStateWithGains::ConstPtr &joint_msg){
   // make local copy of the command, this operation is atomic
   auto cmd = shared_cmd.load();
 
   cmd.levelFlag = LOWLEVEL;
+  const auto& joint_cmd = joint_msg->cmd;
 
   for (std::size_t i(0); i < 12; ++i){
-	  
 	  cmd.motorCmd[i].mode = 0x0A;
-	  cmd.motorCmd[i].q = joint_cmd->position[i];
-	  cmd.motorCmd[i].dq = joint_cmd->velocity[i]; // this is normally zero
-	  cmd.motorCmd[i].tau = joint_cmd->effort[i]; // this is normally fixed
-
-
-  }
-  // WARNING using a fake 13th joint to store the Kp and Kd gains
-  if (joint_cmd->position.size() == 13 && joint_cmd->name[12] == "gains"){
-  	for (std::size_t i(0); i < 12; ++i){
-  		cmd.motorCmd[i].Kp = joint_cmd->position[12]; // typically 100
-		cmd.motorCmd[i].Kd = joint_cmd->velocity[12]; // typically 3
-	}
+      cmd.motorCmd[i].q = joint_cmd.position[i];
+      cmd.motorCmd[i].dq = joint_cmd.velocity[i]; // this is normally zero
+      cmd.motorCmd[i].tau = joint_cmd.effort[i]; // this is normally fixed
+      cmd.motorCmd[i].Kp = joint_msg->Kp[i]; // typically 100
+      cmd.motorCmd[i].Kd = joint_msg->Kd[i]; // typically 3
   }
 
   // update the value of the command, this operation is atomic
