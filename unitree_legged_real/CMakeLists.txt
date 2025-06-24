@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(unitree_legged_real)
 
-add_compile_options(-std=c++11)
 set(CMAKE_BUILD_TYPE "Release")
 
 #cmake_policy(VERSION 3.12)
@@ -25,12 +24,12 @@ endif()
 
 # Assume the sdk is stored inside the $HOME folder
 set(UNITREE_LEGGED_SDK_PATH "$ENV{HOME}/unitree_legged_sdk")
-set(UNITREE_LEGGED_SDK_LIB_PATH "${UNITREE_LEGGED_SDK_PATH}/lib")
+set(UNITREE_LEGGED_SDK_LIB_PATH "${UNITREE_LEGGED_SDK_PATH}/lib/cpp/${ARCH}")
 
 
 link_directories("${UNITREE_LEGGED_SDK_LIB_PATH}")
 set(EXTRA_LIBS -pthread libunitree_legged_sdk.so lcm)
-
+message(STATUS "C++ standard is set to: ${CMAKE_CXX_STANDARD}")
 
 set(CMAKE_CXX_FLAGS "-O3 -fPIC")
 
@@ -44,9 +43,9 @@ include_directories(
 #target_link_libraries(example_walk ${EXTRA_LIBS} ${catkin_LIBRARIES})
 #add_dependencies(example_walk ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-add_executable(example_sin_joint_state src/exe/example_sin_joint_state.cpp)
-target_link_libraries(example_sin_joint_state ${EXTRA_LIBS} ${catkin_LIBRARIES})
-add_dependencies(example_sin_joint_state ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+#add_executable(example_sin_joint_state src/exe/example_sin_joint_state.cpp)
+#target_link_libraries(example_sin_joint_state ${EXTRA_LIBS} ${catkin_LIBRARIES})
+#add_dependencies(example_sin_joint_state ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 
 add_library(${PROJECT_NAME} src/UnitreeUdpInterface.cpp)
